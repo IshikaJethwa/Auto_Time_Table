@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Auto Time Table Generator – Screen Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#E9EDF4; --paper:#FFFFFF; --soft:#F4F6FA; --ink:#1B2540; --muted:#5B6782; --line:#D3DAE6; --grid:#E3E8F0;
+  --brand:#2F5FBF; --s1:#3D7DD8; --s2:#D98E22; --s3:#2F9C82; --s4:#C9576E; --s5:#7A6BD1; --s6:#3F94B5;
+  --good:#2F9C82; --bad:#C9576E; --warn:#D98E22; --break:#DDE2EB;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --bg:#0F1522; --paper:#182133; --soft:#1E2A40; --ink:#E7EBF3; --muted:#9AA6BD; --line:#2E3A52; --grid:#243049; --break:#2A3448;}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0F1522;--paper:#182133;--soft:#1E2A40;--ink:#E7EBF3;--muted:#9AA6BD;--line:#2E3A52;--grid:#243049;--break:#2A3448;}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+
+/* ===== walkthrough shell ===== */
+.shell{display:grid;grid-template-columns:270px 1fr;height:100%}
+.story{border-right:1px solid var(--line);padding:22px 16px;overflow-y:auto;background:var(--paper)}
+.story h1{font-family:var(--display);font-weight:800;font-size:21px;line-height:1.15;margin-bottom:4px}
+.story .by{color:var(--muted);font-size:13px;margin-bottom:18px}
+.story h4{font-size:12px;color:var(--muted);margin:16px 6px 6px;font-weight:700}
+.story ol{list-style:none;counter-reset:n}
+.story li button{width:100%;text-align:left;border:0;background:none;padding:7px 8px;border-radius:8px;display:flex;gap:10px;align-items:center;font-size:14px}
+.story li button b{min-width:24px;height:24px;border-radius:6px;background:var(--soft);display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.story li button.on{background:color-mix(in srgb,var(--brand) 12%,transparent)}
+.story li button.on b{background:var(--brand);color:#fff}
+.story li button.seen b{color:var(--brand)}
+.main{display:flex;flex-direction:column;min-width:0;height:100%;overflow:hidden}
+.top{display:flex;gap:20px;align-items:flex-start;padding:18px 26px 14px;border-bottom:1px solid var(--line);background:var(--paper)}
+.top .t{flex:1;min-width:0}
+.top .step{font-size:13px;color:var(--muted)}
+.top h2{font-family:var(--display);font-weight:800;font-size:26px;line-height:1.15;margin:2px 0 6px}
+.top p{color:var(--muted);max-width:78ch}
+.top ul{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px 18px;list-style:none;font-size:14px}
+.top ul li::before{content:"";display:inline-block;width:7px;height:7px;border-radius:2px;background:var(--brand);margin-right:7px;vertical-align:middle}
+.navs{display:flex;gap:8px;flex-shrink:0}
+.navs button{border:1px solid var(--line);background:var(--paper);border-radius:9px;padding:8px 14px}
+.navs button.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.canvas{flex:1;overflow:auto;padding:22px 26px}
+.mobile-pick{display:none}
+
+/* ===== app window ===== */
+.win{background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:900px;box-shadow:0 1px 0 var(--line)}
+.win .bar{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);background:var(--soft);font-size:13px;color:var(--muted)}
+.win .bar i{width:11px;height:11px;border-radius:50%;background:var(--line)}
+.win .bar span{margin-left:10px;background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:2px 12px;flex:1;max-width:460px}
+.app{display:grid;grid-template-columns:210px 1fr;min-height:560px}
+.side{background:var(--soft);border-right:1px solid var(--line);padding:14px 10px}
+.logo{display:flex;align-items:center;gap:9px;font-family:var(--display);font-weight:800;font-size:16px;padding:4px 6px 14px}
+.logo i{width:26px;height:26px;border-radius:7px;background:conic-gradient(var(--s1) 0 25%,var(--s2) 0 50%,var(--s3) 0 75%,var(--s4) 0)}
+.side .grp{font-size:11.5px;color:var(--muted);margin:12px 8px 4px;font-weight:700}
+.side a{display:block;padding:6px 9px;border-radius:7px;font-size:13.5px;color:var(--ink);text-decoration:none}
+.side a.on{background:var(--paper);font-weight:700;box-shadow:inset 3px 0 0 var(--brand)}
+.body{padding:20px 24px;min-width:0}
+.head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.head h3{font-family:var(--display);font-weight:800;font-size:22px;flex:1}
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:8px;padding:7px 13px;font-size:13.5px}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.good{background:var(--good);border-color:var(--good);color:#fff}
+.search{border:1px solid var(--line);border-radius:8px;padding:7px 12px;background:var(--paper);min-width:200px;color:var(--muted)}
+.filters{display:flex;gap:8px;margin-bottom:12px;align-items:center;flex-wrap:wrap}
+.pill{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:13px;background:var(--paper)}
+.pill.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+table.t{width:100%;border-collapse:collapse;font-size:13.5px}
+table.t th{text-align:left;font-weight:700;color:var(--muted);font-size:12.5px;padding:8px 10px;border-bottom:1px solid var(--line)}
+table.t td{padding:9px 10px;border-bottom:1px solid var(--grid);vertical-align:middle}
+table.t tr.off td{color:var(--muted)}
+table.t tr.off td:not(:last-child){opacity:.55}
+.tog{width:36px;height:20px;border-radius:999px;border:0;background:var(--line);position:relative;vertical-align:middle}
+.tog::after{content:"";position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:left .15s}
+.tog.on{background:var(--good)}
+.tog.on::after{left:19px}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:700;background:var(--soft);border:1px solid var(--line)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:middle}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--paper)}
+.card .n{font-family:var(--display);font-weight:800;font-size:28px}
+.card .l{color:var(--muted);font-size:13px}
+.two{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}
+.panel{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--paper)}
+.panel h5{font-size:14px;margin-bottom:10px}
+.ck{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13.5px}
+.ck i{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;color:#fff;font-style:normal;font-size:11px;flex-shrink:0}
+.ck i.y{background:var(--good)}.ck i.n{background:var(--line);color:var(--muted)}.ck i.w{background:var(--warn)}
+.field{display:grid;gap:4px;margin-bottom:12px;font-size:13px}
+.field label{color:var(--muted);font-weight:700;font-size:12.5px}
+.field .in{border:1px solid var(--line);border-radius:8px;padding:8px 11px;background:var(--paper)}
+.wiz{display:flex;gap:6px;margin-bottom:16px}
+.wiz div{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.wiz div.d{background:var(--brand)}
+
+/* timetable grid */
+.tt{display:grid;grid-template-columns:86px repeat(6,1fr);gap:3px;font-size:12px}
+.tt .h{font-weight:700;color:var(--muted);text-align:center;padding:4px 0}
+.tt .tm{color:var(--muted);font-size:11.5px;display:flex;flex-direction:column;justify-content:center;padding-left:4px}
+.tt .tm b{color:var(--ink);font-size:12px}
+.tt .c{border-radius:7px;min-height:50px;padding:5px 7px;color:#fff;line-height:1.25;position:relative}
+.tt .c b{display:block;font-size:12.5px}
+.tt .c.e{background:var(--grid);color:var(--muted)}
+.tt .brk{grid-column:2/-1;border-radius:7px;text-align:center;padding:4px;color:var(--muted);font-weight:700;font-size:12px;
+  background:repeating-linear-gradient(135deg,var(--break) 0 7px,transparent 7px 14px);border:1px dashed var(--line)}
+.tt .c[draggable=true]{cursor:grab}
+.tt .c.ok{outline:2px solid var(--good);outline-offset:-2px}
+.tt .c.no{outline:2px solid var(--bad);outline-offset:-2px}
+.tt .c .lk{position:absolute;right:5px;top:4px;font-size:11px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--muted);margin-top:10px}
+
+/* matrix */
+.mx td,.mx th{text-align:center}
+.mx td:first-child,.mx th:first-child{text-align:left}
+.box{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--line);background:none;display:inline-grid;place-items:center;color:#fff;font-size:12px}
+.box.on{background:var(--brand);border-color:var(--brand)}
+.load{height:8px;border-radius:4px;background:var(--grid);overflow:hidden;width:120px;display:inline-block;vertical-align:middle}
+.load i{display:block;height:100%}
+
+/* day strip */
+.daystrip{display:flex;gap:3px;height:64px;margin:6px 0}
+.daystrip div{border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff;text-align:center}
+.daystrip .p{background:var(--s1)}
+.daystrip .b{background:repeating-linear-gradient(135deg,var(--break) 0 7px,transparent 7px 14px);border:1px dashed var(--line);color:var(--muted);cursor:grab}
+
+/* generation */
+.prog{height:10px;border-radius:5px;background:var(--grid);overflow:hidden;margin:8px 0}
+.prog i{display:block;height:100%;background:var(--brand);width:0}
+
+/* pdf */
+.pdfwrap{background:var(--soft);padding:18px;border-radius:10px;display:flex;justify-content:center}
+.pdf{background:#fff;color:#1B2540;width:100%;max-width:980px;padding:22px 26px;border-radius:4px;box-shadow:0 2px 10px rgba(20,30,60,.12);font-size:11.5px}
+.pdf .ph{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #1B2540;padding-bottom:8px;margin-bottom:10px}
+.pdf .ph b{font-family:var(--display);font-size:18px;display:block}
+.pdf table{width:100%;border-collapse:collapse;table-layout:fixed}
+.pdf th,.pdf td{border:1px solid #C5CDDA;padding:4px 5px;text-align:center;vertical-align:middle;height:36px}
+.pdf th{background:#EEF1F6;font-size:11px}
+.pdf td.brk{background:repeating-linear-gradient(135deg,#E3E7EE 0 6px,#fff 6px 12px);font-weight:700;color:#5B6782;height:20px}
+.pdf .pf{display:flex;justify-content:space-between;color:#5B6782;font-size:10.5px;margin-top:8px}
+.pdf td span{display:block;font-size:10px;color:#5B6782}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tabs button{border:0;background:none;padding:8px 14px;border-bottom:2px solid transparent;font-size:13.5px;color:var(--muted)}
+.tabs button.on{border-color:var(--brand);color:var(--ink);font-weight:700}
+
+/* phone */
+.phone{width:330px;border:10px solid var(--ink);border-radius:36px;overflow:hidden;background:var(--paper);margin:0 auto}
+.phone .ps{padding:16px}
+.phone .lec{border-radius:12px;padding:12px 14px;color:#fff;margin-bottom:8px}
+.phone .lec small{display:block;opacity:.9}
+.phone .now{outline:3px solid var(--warn);outline-offset:2px}
+.daysel{display:flex;gap:5px;margin:10px 0 14px}
+.daysel span{flex:1;text-align:center;padding:6px 0;border-radius:8px;background:var(--soft);font-size:12px;font-weight:700}
+.daysel span.on{background:var(--brand);color:#fff}
+
+.login{display:grid;grid-template-columns:1fr 1fr;min-height:560px}
+.login .art{background:var(--soft);display:grid;place-items:center;padding:30px}
+.login .form{padding:60px 56px;display:flex;flex-direction:column;justify-content:center}
+
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  .story{display:none}
+  .mobile-pick{display:block;margin-top:8px}
+  .top{flex-direction:column}
+  .canvas{padding:14px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="story" aria-label="Screens">
+    <h1>Auto Time Table Generator</h1>
+    <p class="by">Screen walkthrough for client review</p>
+    <div id="storyList"></div>
+  </aside>
+  <main class="main">
+    <header class="top">
+      <div class="t">
+        <div class="step" id="stepNo"></div>
+        <h2 id="stepTitle"></h2>
+        <p id="stepPurpose"></p>
+        <ul id="stepPoints"></ul>
+        <select class="mobile-pick search" id="mobilePick" aria-label="Jump to screen"></select>
+      </div>
+      <div class="navs">
+        <button id="prevBtn">Back</button>
+        <button id="nextBtn" class="pri">Next screen</button>
+      </div>
+    </header>
+    <div class="canvas" id="canvas"></div>
+  </main>
+</div>
+
+<script>
+/* ---------- sample data ---------- */
+const S = {
+  DS:{t:"Data Structures",c:"s1",f:"RM",cr:4,th:3,pr:2},
+  DBMS:{t:"Database Mgmt Systems",c:"s2",f:"KS",cr:4,th:3,pr:2},
+  OS:{t:"Operating Systems",c:"s3",f:"AP",cr:3,th:3,pr:0},
+  JAVA:{t:"Java Programming",c:"s4",f:"NJ",cr:4,th:3,pr:2},
+  MATH:{t:"Discrete Mathematics",c:"s5",f:"PD",cr:3,th:3,pr:0},
+  ENG:{t:"Communication Skills",c:"s6",f:"HV",cr:2,th:2,pr:0}
+};
+const F = {
+  RM:{n:"Dr. Rina Mehta",d:"Computer Science",max:5,wk:18},
+  KS:{n:"Prof. Kunal Shah",d:"Computer Science",max:5,wk:18},
+  AP:{n:"Prof. Amit Patel",d:"Computer Science",max:5,wk:16},
+  NJ:{n:"Prof. Nisha Joshi",d:"Computer Science",max:5,wk:18},
+  PD:{n:"Dr. Pooja Desai",d:"Mathematics",max:4,wk:14},
+  HV:{n:"Ms. Heena Vora",d:"English",max:4,wk:12}
+};
+const DAYS=["Mon","Tue","Wed","Thu","Fri","Sat"];
+const DAYS_FULL=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const SLOTS=[["P1","09:00","09:55"],["P2","09:55","10:50"],["P3","11:05","12:00"],["P4","12:00","12:55"],["P5","13:35","14:30"],["P6","14:30","15:25"]];
+/* week[period][day]; "L:X" = 2-slot practical starting here, "^" = continuation, "" = free */
+const WEEK_A=[
+ ["DS","OS","L:JAVA","MATH","DBMS","JAVA"],
+ ["DBMS","DS","^","JAVA","OS","DBMS"],
+ ["OS","MATH","DS","L:DBMS","JAVA","MATH"],
+ ["JAVA","DBMS","OS","^","ENG","ENG"],
+ ["L:DS","JAVA","MATH","DS","ENG",""],
+ ["^","ENG","DBMS","OS","",""]
+];
+function shiftWeek(w,n){return w.map(r=>r.map((_,d)=>r[(d+n)%5===d?d:(d+n)%6]))}
+const WEEK_B=WEEK_A.map(r=>[r[2],r[3],r[0],r[1],r[4],r[5]]).map((r,i,a)=>r);
+const ROOM={A:"Room 201",B:"Room 202"};
+const LABS=["Lab 1","Lab 2"];
+const cellHTML=(code,div,small)=>{
+  if(!code) return `<div class="c e">${small?"":"Free"}</div>`;
+  if(code==="^") return null;
+  const lab=code.startsWith("L:"); const k=lab?code.slice(2):code; const s=S[k];
+  const where=lab?"Lab 1 · B1 / Lab 2 · B2":ROOM[div||"A"];
+  return `<div class="c" style="background:var(--${s.c})${lab?";grid-row:span 2":""}"><b>${k}${lab?" Lab":""}</b>${s.f} · ${where}</div>`;
+};
+function gridHTML(week,div,opts={}){
+  let h=`<div class="tt"><div></div>${DAYS.map(d=>`<div class="h">${d}</div>`).join("")}`;
+  SLOTS.forEach((sl,p)=>{
+    if(p===2) h+=`<div class="tm">10:50</div><div class="brk">Tea break · 15 min</div>`;
+    if(p===4) h+=`<div class="tm">12:55</div><div class="brk">Lunch break · 40 min</div>`;
+    h+=`<div class="tm"><b>${sl[0]}</b>${sl[1]}–${sl[2]}</div>`;
+    DAYS.forEach((_,d)=>{
+      const code=week[p][d];
+      if(code==="^") return;
+      if(d===5&&p>3){h+=`<div class="c e" style="background:repeating-linear-gradient(135deg,var(--break) 0 7px,transparent 7px 14px)">Half day</div>`;return;}
+      let c=cellHTML(code,div);
+      if(opts.edit) c=c.replace('class="c','data-p="'+p+'" data-d="'+d+'" draggable="'+(code&&!code.startsWith("L:")?"true":"false")+'" class="c');
+      if(opts.lock && p===0 && d===0) c=c.replace("</div>",'<span class="lk" title="Locked">🔒</span></div>');
+      h+=c;
+    });
+  });
+  return h+`</div>`;
+}
+const legend=()=>`<div class="legend">${Object.entries(S).map(([k,s])=>`<span><i class="dot" style="background:var(--${s.c})"></i>${k} – ${s.t} (${s.f})</span>`).join("")}</div>`;
+
+/* ---------- app frame ---------- */
+const MENU=[
+ ["Home",["Dashboard"]],
+ ["Setup",["Academic Year","Shift & Breaks","Programs & Semesters","Classes & Batches","Rooms & Labs","Faculty","Subjects","Faculty ↔ Subject"]],
+ ["Timetable",["Generate","Editor","Publish"]],
+ ["Reports",["Semester-wise","Faculty-wise","Day-wise","Room & Lab","Master"]]
+];
+function frame(active,url,inner){
+  return `<div class="win"><div class="bar"><i></i><i></i><i></i><span>timetable.yourcollege.edu/${url}</span></div>
+  <div class="app"><nav class="side"><div class="logo"><i></i>AutoTimeTable</div>
+  ${MENU.map(([g,items])=>`<div class="grp">${g}</div>${items.map(x=>`<a href="#" class="${x===active?"on":""}" onclick="return false">${x}</a>`).join("")}`).join("")}
+  </nav><div class="body">${inner}</div></div></div>`;
+}
+const tog=(on)=>`<button class="tog ${on?"on":""}" aria-label="Active" onclick="toggleRow(this)"></button>`;
+function toggleRow(b){b.classList.toggle("on");const tr=b.closest("tr");if(tr)tr.classList.toggle("off",!b.classList.contains("on"));}
+function listPage(title,cols,rows,extra=""){
+  return `<div class="head"><h3>${title}</h3><input class="search" placeholder="Search ${title.toLowerCase()}"><button class="btn pri">+ Add</button><button class="btn">Import Excel</button></div>
+  <div class="filters"><span class="pill on">All</span><span class="pill">Active</span><span class="pill">Inactive</span>${extra}</div>
+  <table class="t"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}<th>Active</th></tr></thead><tbody>
+  ${rows.map(r=>`<tr class="${r.off?"off":""}">${r.v.map(x=>`<td>${x}</td>`).join("")}<td>${tog(!r.off)}</td></tr>`).join("")}</tbody></table>`;
+}
+
+/* ---------- PDF report builders ---------- */
+function pdfShell(title,sub,table,foot){
+  return `<div class="pdfwrap"><div class="pdf"><div class="ph"><div><b>Shree Vidya College of Computer Applications</b>${title}</div><div style="text-align:right">${sub}</div></div>${table}<div class="pf"><span>Academic Year 2026-27 · Version 3 (published)</span><span>${foot||"Generated on 25 Nov 2026"}</span></div></div></div>`;
+}
+function pdfWeek(week,div){
+  let h=`<table><thead><tr><th style="width:80px">Time</th>${DAYS_FULL.map(d=>`<th>${d}</th>`).join("")}</tr></thead><tbody>`;
+  SLOTS.forEach((sl,p)=>{
+    if(p===2) h+=`<tr><td>10:50–11:05</td><td class="brk" colspan="6">TEA BREAK</td></tr>`;
+    if(p===4) h+=`<tr><td>12:55–13:35</td><td class="brk" colspan="6">LUNCH BREAK</td></tr>`;
+    h+=`<tr><td>${sl[1]}–${sl[2]}</td>`;
+    DAYS.forEach((_,d)=>{
+      const c=week[p][d]; if(c==="^") return;
+      if(d===5&&p===4){h+=`<td class="brk" rowspan="2">HALF DAY</td>`;return;}
+      if(d===5&&p===5) return;
+      if(!c){h+=`<td></td>`;return;}
+      const lab=c.startsWith("L:"),k=lab?c.slice(2):c,s=S[k];
+      h+=`<td ${lab?'rowspan="2"':""} style="background:color-mix(in srgb,var(--${s.c}) 16%,#fff)"><b>${k}${lab?" Lab":""}</b><span>${s.f} · ${lab?"Lab 1 (B1) / Lab 2 (B2)":ROOM[div]}</span></td>`;
+    });
+    h+=`</tr>`;
+  });
+  return h+`</tbody></table>`;
+}
+function facultyWeek(code){
+  /* collect from division A and B */
+  const g=SLOTS.map(()=>DAYS.map(()=>""));
+  [["A",WEEK_A],["B",WEEK_B]].forEach(([div,w])=>w.forEach((r,p)=>r.forEach((c,d)=>{
+    if(!c||c==="^")return; const lab=c.startsWith("L:"),k=lab?c.slice(2):c;
+    if(S[k].f===code && !g[p][d]) {g[p][d]=`<b>${k}${lab?" Lab":""}</b><span>BCA-3${div} · ${lab?"Lab 1":ROOM[div]}</span>`; if(lab&&p<5) g[p+1][d]=`<b>${k} Lab</b><span>BCA-3${div} · Lab 2</span>`;}
+  })));
+  let n=0;
+  let h=`<table><thead><tr><th style="width:80px">Time</th>${DAYS_FULL.map(d=>`<th>${d}</th>`).join("")}</tr></thead><tbody>`;
+  SLOTS.forEach((sl,p)=>{
+    if(p===2) h+=`<tr><td>10:50–11:05</td><td class="brk" colspan="6">TEA BREAK</td></tr>`;
+    if(p===4) h+=`<tr><td>12:55–13:35</td><td class="brk" colspan="6">LUNCH BREAK</td></tr>`;
+    h+=`<tr><td>${sl[1]}–${sl[2]}</td>${g[p].map(x=>{if(x)n++;return `<td style="${x?"background:#EEF3FC":""}">${x}</td>`}).join("")}</tr>`;
+  });
+  return {html:h+`</tbody></table>`,n};
+}
+function dayWise(d){
+  const divs=[["BCA-3A",WEEK_A,"A"],["BCA-3B",WEEK_B,"B"]];
+  let h=`<table><thead><tr><th style="width:90px">Class</th>${SLOTS.map((s,i)=>`<th>${s[0]}<br><span style="font-weight:400">${s[1]}</span></th>${i===1?'<th style="width:34px">Tea</th>':i===3?'<th style="width:40px">Lunch</th>':""}`).join("")}</tr></thead><tbody>`;
+  divs.forEach(([name,w,div])=>{
+    h+=`<tr><td><b>${name}</b></td>`;
+    SLOTS.forEach((_,p)=>{
+      let c=w[p][d]; let lab=false;
+      if(c==="^"){c=w[p-1][d];}
+      if(c&&c.startsWith("L:")){lab=true;c=c.slice(2);}
+      h+= c?`<td style="background:color-mix(in srgb,var(--${S[c].c}) 16%,#fff)"><b>${c}${lab?" Lab":""}</b><span>${S[c].f}</span></td>`:`<td></td>`;
+      if(p===1||p===3) h+=`<td class="brk"></td>`;
+    });
+    h+=`</tr>`;
+  });
+  return h+`</tbody></table>`;
+}
+
+/* ---------- screens ---------- */
+const SCREENS=[
+{g:"Start",t:"Login",a:null,
+ p:"Every user signs in with their own account. What they see next depends on their role.",
+ pts:["Admin, Coordinator, Faculty, Student roles","Same login on web and mobile app","Forgot-password by email"],
+ r:()=>`<div class="win"><div class="bar"><i></i><i></i><i></i><span>timetable.yourcollege.edu/login</span></div><div class="login">
+ <div class="art">${gridHTML(WEEK_A,"A")}</div>
+ <div class="form"><div class="logo" style="font-size:22px"><i></i>AutoTimeTable</div>
+ <p style="color:var(--muted);margin:-6px 0 22px">Sign in to manage or view timetables</p>
+ <div class="field"><label>Email</label><div class="in">coordinator@yourcollege.edu</div></div>
+ <div class="field"><label>Password</label><div class="in">••••••••••</div></div>
+ <button class="btn pri" style="padding:10px">Sign in</button>
+ <p style="margin-top:12px;font-size:13px;color:var(--brand)">Forgot password?</p></div></div></div>`},
+
+{g:"Start",t:"Dashboard",a:"Dashboard",
+ p:"The coordinator's home. It shows what is set up, what is missing, and the state of the latest timetable.",
+ pts:["Counts of active records","Setup checklist with progress","Last generation result","Quick actions"],
+ r:()=>frame("Dashboard","dashboard",`<div class="head"><h3>Good morning, Coordinator</h3><span class="chip">Academic Year 2026-27</span></div>
+ <div class="cards">${[["6","Active programs"],["14","Classes / divisions"],["38","Faculty"],["92","Subjects"]].map(([n,l])=>`<div class="card"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("")}</div>
+ <div class="two"><div class="panel"><h5>Setup checklist · 7 of 8 done</h5>
+ ${[["y","Academic year 2026-27"],["y","Shifts, tea and lunch breaks"],["y","Programs and semesters"],["y","Classes and batches"],["y","Rooms and labs"],["y","Faculty with availability"],["y","Subjects with credits"],["w","Faculty ↔ subject mapping · 3 subjects unassigned"]].map(([s,x])=>`<div class="ck"><i class="${s}">${s==="y"?"✓":"!"}</i>${x}</div>`).join("")}
+ </div><div class="panel"><h5>Latest timetable</h5>
+ <div class="ck"><i class="y">✓</i>Version 3 published on 22 Nov 2026</div>
+ <div class="ck"><i class="y">✓</i>0 hard clashes · fitness 0.97</div>
+ <div class="ck"><i class="w">!</i>4 soft warnings (faculty gaps)</div>
+ <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn pri">Generate new</button><button class="btn">Open editor</button><button class="btn">Download PDFs</button></div></div></div>`)},
+
+{g:"Setup",t:"Academic Year",a:"Academic Year",
+ p:"Defines the year every timetable belongs to. Only one year is current; old years stay for printing history.",
+ pts:["Start and end dates","One current year","Inactive years hidden from pickers"],
+ r:()=>frame("Academic Year","setup/academic-year",listPage("Academic Years",["Name","Start","End","Current"],[
+  {v:["<b>2026-27</b>","01 Jun 2026","31 May 2027",'<span class="chip" style="color:var(--good)">Current</span>']},
+  {v:["2025-26","01 Jun 2025","31 May 2026","—"]},
+  {v:["2024-25","01 Jun 2024","31 May 2025","—"],off:true}]))},
+
+{g:"Setup",t:"Shift & Breaks",a:"Shift & Breaks",
+ p:"Sets the college day and its breaks. Period slots are calculated automatically, so moving lunch re-flows every timetable.",
+ pts:["Day start, end and period length","Tea and lunch placed by dragging","Different rule per day (Saturday half day)","Morning and afternoon shifts"],
+ r:()=>frame("Shift & Breaks","setup/shifts",`<div class="head"><h3>Shift & Breaks</h3><button class="btn">+ Add break</button><button class="btn pri">Save and rebuild slots</button></div>
+ <div class="filters"><span class="pill on">Morning shift (College)</span><span class="pill">School shift</span></div>
+ <div class="cards" style="grid-template-columns:repeat(4,1fr)">${[["09:00","Day starts"],["15:25","Day ends"],["55 min","Period length"],["6","Periods per day"]].map(([n,l])=>`<div class="card"><div class="n" style="font-size:22px">${n}</div><div class="l">${l}</div></div>`).join("")}</div>
+ <div class="panel"><h5>Monday to Friday</h5>
+ <div class="daystrip"><div class="p" style="flex:55">P1</div><div class="p" style="flex:55">P2</div><div class="b" style="flex:15" title="Drag to move">Tea</div><div class="p" style="flex:55">P3</div><div class="p" style="flex:55">P4</div><div class="b" style="flex:40" title="Drag to move">Lunch</div><div class="p" style="flex:55">P5</div><div class="p" style="flex:55">P6</div></div>
+ <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)"><span>09:00</span><span>10:50 tea</span><span>12:55 lunch</span><span>15:25</span></div>
+ <h5 style="margin-top:16px">Saturday · half day, no lunch</h5>
+ <div class="daystrip" style="width:56%"><div class="p" style="flex:55">P1</div><div class="p" style="flex:55">P2</div><div class="b" style="flex:15">Tea</div><div class="p" style="flex:55">P3</div><div class="p" style="flex:55">P4</div></div>
+ </div>
+ <table class="t" style="margin-top:14px"><thead><tr><th>Break</th><th>From</th><th>To</th><th>Applies to</th><th>Active</th></tr></thead><tbody>
+ <tr><td>Tea break</td><td>10:50</td><td>11:05</td><td>Mon–Sat</td><td>${tog(1)}</td></tr>
+ <tr><td>Lunch break</td><td>12:55</td><td>13:35</td><td>Mon–Fri</td><td>${tog(1)}</td></tr></tbody></table>`)},
+
+{g:"Setup",t:"Programs & Semesters",a:"Programs & Semesters",
+ p:"Lists what the institute teaches. For a school, the same screen shows Wings and Standards instead.",
+ pts:["Programs like BCA, B.Tech, MCA","Semesters under each program","Switch labels for school mode"],
+ r:()=>frame("Programs & Semesters","setup/programs",listPage("Programs",["Program","Code","Duration","Semesters"],[
+  {v:["<b>Bachelor of Computer Applications</b>","BCA","3 years",'<span class="chip">Sem 1</span> <span class="chip">Sem 3</span> <span class="chip">Sem 5</span>']},
+  {v:["<b>Bachelor of Technology (CE)</b>","BTECH","4 years",'<span class="chip">Sem 1</span> <span class="chip">Sem 3</span> <span class="chip">Sem 5</span> <span class="chip">Sem 7</span>']},
+  {v:["<b>Master of Computer Applications</b>","MCA","2 years",'<span class="chip">Sem 1</span> <span class="chip">Sem 3</span>']},
+  {v:["Post Graduate Diploma in CA","PGDCA","1 year",'<span class="chip">Sem 1</span>'],off:true}],
+  `<span style="margin-left:auto;font-size:13px;color:var(--muted)">Institution type: <b style="color:var(--ink)">College</b> · School</span>`))},
+
+{g:"Setup",t:"Classes & Batches",a:"Classes & Batches",
+ p:"Each semester is split into divisions, and divisions into batches for practicals, so two batches can be in two labs at once.",
+ pts:["Division strength","Batches for lab sessions","Shift per division"],
+ r:()=>frame("Classes & Batches","setup/classes",listPage("Classes",["Class","Program / Sem","Strength","Batches","Shift"],[
+  {v:["<b>BCA-3A</b>","BCA · Sem 3","60",'<span class="chip">B1 · 30</span> <span class="chip">B2 · 30</span>',"Morning"]},
+  {v:["<b>BCA-3B</b>","BCA · Sem 3","58",'<span class="chip">B1 · 29</span> <span class="chip">B2 · 29</span>',"Morning"]},
+  {v:["<b>BTECH-5A</b>","BTECH · Sem 5","66",'<span class="chip">B1</span> <span class="chip">B2</span> <span class="chip">B3</span>',"Morning"]},
+  {v:["<b>MCA-1A</b>","MCA · Sem 1","40",'<span class="chip">B1 · 20</span> <span class="chip">B2 · 20</span>',"Afternoon"]},
+  {v:["BCA-5C","BCA · Sem 5","22","—","Morning"],off:true}]))},
+
+{g:"Setup",t:"Rooms & Labs",a:"Rooms & Labs",
+ p:"Every teaching space with its capacity. Labs carry a type, so a Java practical only goes to a computer lab.",
+ pts:["Capacity checked against class strength","Lab type matching","Inactive room is skipped (e.g. under repair)"],
+ r:()=>frame("Rooms & Labs","setup/rooms",`<div class="tabs"><button class="on">Rooms (12)</button><button>Labs (5)</button></div>`+listPage("Rooms & Labs",["Name","Type","Capacity","Building"],[
+  {v:["<b>Room 201</b>","Classroom","70","Main block"]},
+  {v:["<b>Room 202</b>","Classroom","70","Main block"]},
+  {v:["<b>Lab 1</b>",'<span class="chip">Computer lab</span>',"32","IT block"]},
+  {v:["<b>Lab 2</b>",'<span class="chip">Computer lab</span>',"32","IT block"]},
+  {v:["Room 105","Classroom","40","Old block"],off:true}]))},
+
+{g:"Setup",t:"Faculty",a:"Faculty",
+ p:"Teachers, their limits and when they are not available. The generator never books them outside these rules.",
+ pts:["Max lectures per day and week","Unavailable slots blocked","Department filter"],
+ r:()=>frame("Faculty","setup/faculty",`<div class="two" style="grid-template-columns:1.5fr 1fr"><div>`+listPage("Faculty",["Code","Name","Department","Max / day","Max / week"],
+  Object.entries(F).map(([k,f],i)=>({v:[`<b>${k}</b>`,f.n,f.d,f.max,f.wk],off:false})))+`</div>
+  <div class="panel"><h5>Availability · Dr. Pooja Desai</h5><p style="font-size:12.5px;color:var(--muted);margin-bottom:8px">Click a slot to block it</p>
+  <div class="tt" style="grid-template-columns:40px repeat(6,1fr)"><div></div>${DAYS.map(d=>`<div class="h">${d}</div>`).join("")}
+  ${SLOTS.map((s,p)=>`<div class="tm"><b>${s[0]}</b></div>${DAYS.map((_,d)=>{const blk=(d===2&&p>3)||(d===5);return `<div class="c" style="min-height:24px;background:${blk?"repeating-linear-gradient(135deg,var(--bad) 0 4px,transparent 4px 8px)":"var(--grid)"}"></div>`}).join("")}`).join("")}</div>
+  <div class="legend"><span><i class="dot" style="background:var(--grid)"></i>Available</span><span><i class="dot" style="background:var(--bad)"></i>Not available</span></div></div></div>`)},
+
+{g:"Setup",t:"Subjects",a:"Subjects",
+ p:"Each subject's weekly load comes from its credits: theory lectures plus practical hours in a lab.",
+ pts:["Credit, theory and practical split","Practical length in slots","Colour used on every timetable and PDF"],
+ r:()=>frame("Subjects","setup/subjects",listPage("Subjects · BCA Sem 3",["Code","Subject","Credit","Theory / week","Practical / week","Lab type"],
+  Object.entries(S).map(([k,s])=>({v:[`<i class="dot" style="background:var(--${s.c})"></i><b>${k}</b>`,s.t,s.cr,s.th,s.pr?s.pr+" hrs (1 × 2 slots)":"—",s.pr?"Computer lab":"—"]})),
+  `<span class="pill">BCA</span><span class="pill">Sem 3</span>`))},
+
+{g:"Setup",t:"Faculty ↔ Subject",a:"Faculty ↔ Subject",
+ p:"Decides who teaches what in which class. The load bar shows at once if a teacher is given more than their weekly limit.",
+ pts:["Tick to assign","Separate theory and practical owners","Live weekly load per faculty","Unassigned subjects flagged"],
+ r:()=>{
+  const subs=Object.keys(S);
+  const load={RM:14,KS:16,AP:12,NJ:19,PD:10,HV:8};
+  return frame("Faculty ↔ Subject","setup/mapping",`<div class="head"><h3>Faculty ↔ Subject</h3><span class="chip">BCA-3A</span><button class="btn pri">Save mapping</button></div>
+  <table class="t mx"><thead><tr><th>Faculty</th>${subs.map(s=>`<th><i class="dot" style="background:var(--${S[s].c})"></i>${s}</th>`).join("")}<th style="text-align:left">Weekly load</th></tr></thead><tbody>
+  ${Object.entries(F).map(([k,f])=>`<tr><td><b>${f.n}</b></td>${subs.map(s=>`<td><button class="box ${S[s].f===k?"on":""}" onclick="this.classList.toggle('on');this.textContent=this.classList.contains('on')?'✓':''">${S[s].f===k?"✓":""}</button></td>`).join("")}
+  <td style="text-align:left"><span class="load"><i style="width:${Math.min(100,load[k]/f.wk*100)}%;background:var(--${load[k]>f.wk?"bad":"good"})"></i></span> <span style="font-size:12.5px;color:${load[k]>f.wk?"var(--bad)":"var(--muted)"}">${load[k]} / ${f.wk}${load[k]>f.wk?" over":""}</span></td></tr>`).join("")}
+  </tbody></table><p style="font-size:13px;color:var(--muted);margin-top:10px">Tip: click any box to try assigning a different faculty.</p>`)}},
+
+{g:"Generate",t:"Check and generate",a:"Generate",
+ p:"Before the algorithm runs, the system checks the inputs. Problems are listed in plain words with a link to fix them.",
+ pts:["Pre-run validation","Choose classes to include","Fast, Balanced or Best quality","Locked cells are kept"],
+ r:()=>frame("Generate","timetable/generate",`<div class="head"><h3>Generate timetable</h3></div>
+ <div class="two"><div class="panel"><h5>Readiness check</h5>
+ ${[["y","Every subject has a faculty"],["y","Weekly load fits available slots (31 of 33 used)"],["y","Each practical has a lab of the right type"],["y","Room capacity fits every class"],["w","Prof. Nisha Joshi at 19 of 18 hours · fix in mapping"]].map(([s,x])=>`<div class="ck"><i class="${s}">${s==="y"?"✓":"!"}</i>${x}</div>`).join("")}
+ </div><div class="panel"><h5>Run settings</h5>
+ <div class="field"><label>Classes</label><div class="in">BCA-3A, BCA-3B, BTECH-5A, MCA-1A (14 selected)</div></div>
+ <div class="field"><label>Quality</label><div style="display:flex;gap:6px"><span class="pill">Fast · 30 s</span><span class="pill on">Balanced · 2 min</span><span class="pill">Best · 5 min</span></div></div>
+ <div class="field"><label>Locked cells</label><div class="in">3 cells kept as they are</div></div>
+ <button class="btn pri" style="width:100%;padding:10px" onclick="go(cur+1)">Generate timetable</button></div></div>`)},
+
+{g:"Generate",t:"Generation in progress",a:"Generate",
+ p:"The coordinator watches the run live: clashes fall to zero while the quality score rises. They can stop at any time and keep the best result.",
+ pts:["Live progress","Hard clashes counter","Quality score","Stop and keep best"],
+ r:()=>frame("Generate","timetable/generate/run-41",`<div class="head"><h3>Generating…</h3><button class="btn">Stop and keep best</button></div>
+ <div class="cards" style="grid-template-columns:repeat(3,1fr)"><div class="card"><div class="n" id="gGen">0</div><div class="l">Generation</div></div>
+ <div class="card"><div class="n" id="gClash" style="color:var(--bad)">212</div><div class="l">Hard clashes</div></div>
+ <div class="card"><div class="n" id="gFit">0.04</div><div class="l">Quality score (1.00 = perfect)</div></div></div>
+ <div class="prog"><i id="gBar"></i></div>
+ <div class="panel"><svg viewBox="0 0 800 200" style="width:100%;height:auto" aria-label="Progress chart"><g stroke="var(--grid)"><line x1="0" y1="20" x2="800" y2="20"/><line x1="0" y1="100" x2="800" y2="100"/><line x1="0" y1="180" x2="800" y2="180"/></g>
+ <path id="gFitLine" fill="none" stroke="var(--brand)" stroke-width="3"/><path id="gClashLine" fill="none" stroke="var(--bad)" stroke-width="3"/></svg>
+ <div class="legend"><span><i class="dot" style="background:var(--brand)"></i>Quality score</span><span><i class="dot" style="background:var(--bad)"></i>Hard clashes</span></div></div>
+ <p id="gDone" style="display:none;margin-top:12px" class="ck"><i class="y">✓</i><b>Done. 0 hard clashes, 4 soft warnings.</b>&nbsp;<button class="btn pri" onclick="go(cur+1)">Open in editor</button></p>`),
+ after:runGen},
+
+{g:"Generate",t:"Timetable editor",a:"Editor",
+ p:"The generated week, colour-coded by subject. Drag a lecture to another cell; green means allowed, red means a clash, with the reason shown.",
+ pts:["Drag and drop","Clash check on every move","Lock a cell 🔒 so reruns keep it","Warnings panel"],
+ r:()=>frame("Editor","timetable/editor/bca-3a",`<div class="head"><h3>BCA-3A · Semester 3</h3><span class="chip">Version 4 · draft</span><button class="btn">Undo</button><button class="btn pri">Save</button></div>
+ <div class="two" style="grid-template-columns:1fr 230px"><div>${gridHTML(WEEK_A,"A",{edit:true,lock:true})}${legend()}</div>
+ <div class="panel"><h5>Warnings (4)</h5><div class="ck" style="align-items:flex-start"><i class="w">!</i>Prof. Patel has a 2-period gap on Tuesday</div>
+ <div class="ck" style="align-items:flex-start"><i class="w">!</i>MATH twice on Thursday in BCA-3B</div><div class="ck" style="align-items:flex-start"><i class="w">!</i>Dr. Desai has 3 in a row on Monday</div><div class="ck" style="align-items:flex-start"><i class="w">!</i>BCA-3A free in P6 on Friday</div>
+ <p id="dragMsg" style="margin-top:10px;font-size:13px;color:var(--muted)">Try it: drag any lecture onto another cell.</p></div></div>`),
+ after:wireEditor},
+
+{g:"Generate",t:"Publish",a:"Publish",
+ p:"Nothing reaches faculty or students until it is published. Every run is kept as a version, so the college can compare or roll back.",
+ pts:["Versions with date and quality","Compare and roll back","Publish notifies faculty and students"],
+ r:()=>frame("Publish","timetable/publish",`<div class="head"><h3>Versions</h3></div>
+ <table class="t"><thead><tr><th>Version</th><th>Created</th><th>Hard clashes</th><th>Quality</th><th>Status</th><th></th></tr></thead><tbody>
+ <tr><td><b>Version 4</b></td><td>25 Nov 2026, 10:42</td><td style="color:var(--good)">0</td><td>0.97</td><td><span class="chip">Draft</span></td><td><button class="btn good" onclick="this.closest('tr').querySelector('.chip').textContent='Published';this.closest('tr').querySelector('.chip').style.color='var(--good)';this.textContent='Published ✓';this.disabled=true">Publish</button></td></tr>
+ <tr><td>Version 3</td><td>22 Nov 2026, 16:05</td><td style="color:var(--good)">0</td><td>0.95</td><td><span class="chip" style="color:var(--good)">Published</span></td><td><button class="btn">Compare</button></td></tr>
+ <tr><td>Version 2</td><td>20 Nov 2026, 11:30</td><td style="color:var(--bad)">2</td><td>0.81</td><td><span class="chip">Archived</span></td><td><button class="btn">Restore</button></td></tr></tbody></table>`)},
+
+{g:"Reports",t:"Semester-wise PDF",a:"Semester-wise",
+ p:"The timetable for one class, as it will be printed and put on the notice board. One page per class, landscape.",
+ pts:["Breaks as shaded rows","Practicals span both slots with batches","Download one or all classes as ZIP"],
+ r:()=>frame("Semester-wise","reports/semester",`<div class="head"><h3>Semester-wise report</h3><span class="chip">BCA-3A</span><button class="btn">Download all (ZIP)</button><button class="btn pri">Download PDF</button></div>`+
+ pdfShell("Semester-wise Timetable","<b>BCA · Semester 3 · Division A</b>Class teacher: Dr. Rina Mehta",pdfWeek(WEEK_A,"A")))},
+
+{g:"Reports",t:"Faculty-wise PDF",a:"Faculty-wise",
+ p:"Each teacher's personal week across all classes, with their total load, so departments can check workload fairness.",
+ pts:["All classes for one teacher","Weekly total vs limit","Bulk print for all faculty"],
+ r:()=>{const fw=facultyWeek("RM");return frame("Faculty-wise","reports/faculty",`<div class="head"><h3>Faculty-wise report</h3><span class="chip">Dr. Rina Mehta</span><button class="btn pri">Download PDF</button></div>`+
+ pdfShell("Faculty-wise Timetable",`<b>Dr. Rina Mehta (RM)</b>Computer Science · ${fw.n} periods this week (limit 18)`,fw.html))}},
+
+{g:"Reports",t:"Day-wise PDF",a:"Day-wise",
+ p:"All classes for a single day on one page. Useful for the office to see who is where today and to arrange substitutes.",
+ pts:["Pick any day","Every class on one sheet"],
+ r:()=>frame("Day-wise","reports/day",`<div class="head"><h3>Day-wise report</h3><div class="tabs" style="margin:0;border:0">${DAYS_FULL.map((d,i)=>`<button class="${i===0?"on":""}" onclick="document.getElementById('dwBox').innerHTML=pdfShell('Day-wise Timetable','<b>${d}</b>All classes',dayWise(${i}));this.parentNode.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${d.slice(0,3)}</button>`).join("")}</div><button class="btn pri">Download PDF</button></div>
+ <div id="dwBox">${pdfShell("Day-wise Timetable","<b>Monday</b>All classes",dayWise(0))}</div>`)},
+
+{g:"Reports",t:"Room & Lab PDF",a:"Room & Lab",
+ p:"Shows how each room or lab is used across the week, and where it is free for extra lectures or exams.",
+ pts:["Occupancy per room or lab","Free slots stand out","Utilisation percentage"],
+ r:()=>{
+  const g=SLOTS.map((_,p)=>DAYS.map((_,d)=>{for(const [div,w] of [["A",WEEK_A],["B",WEEK_B]]){let c=w[p][d];if(c==="^")c=w[p-1][d];if(c&&c.startsWith("L:"))return `<b>${c.slice(2)} Lab</b><span>BCA-3${div} B1</span>`;}return "";}));
+  let used=0;
+  let h=`<table><thead><tr><th style="width:80px">Time</th>${DAYS_FULL.map(d=>`<th>${d}</th>`).join("")}</tr></thead><tbody>`;
+  SLOTS.forEach((sl,p)=>{if(p===2)h+=`<tr><td>10:50–11:05</td><td class="brk" colspan="6">TEA BREAK</td></tr>`;if(p===4)h+=`<tr><td>12:55–13:35</td><td class="brk" colspan="6">LUNCH BREAK</td></tr>`;
+   h+=`<tr><td>${sl[1]}–${sl[2]}</td>${g[p].map(x=>{if(x)used++;return `<td style="background:${x?"#EEF3FC":"#F3FBF7"}">${x||'<span style="color:#2F9C82">Free</span>'}</td>`}).join("")}</tr>`;});
+  h+=`</tbody></table>`;
+  return frame("Room & Lab","reports/rooms",`<div class="head"><h3>Room & Lab report</h3><span class="chip">Lab 1 · Computer lab</span><button class="btn pri">Download PDF</button></div>`+pdfShell("Room / Lab-wise Timetable",`<b>Lab 1 · IT block · 32 seats</b>Used ${used} of 36 periods (${Math.round(used/36*100)}%)`,h));}},
+
+{g:"Reports",t:"Master timetable PDF",a:"Master",
+ p:"The whole institute on one A3 sheet: every class against every period, in short codes, for the principal's office.",
+ pts:["All classes, all days","Compact codes with a legend","A3 landscape"],
+ r:()=>{
+  const divs=[["BCA-3A",WEEK_A],["BCA-3B",WEEK_B]];
+  let h=`<table style="font-size:10px"><thead><tr><th style="width:70px">Class</th><th style="width:44px">Day</th>${SLOTS.map(s=>`<th>${s[0]}<br><span style="font-weight:400">${s[1]}</span></th>`).join("")}</tr></thead><tbody>`;
+  divs.forEach(([name,w])=>DAYS.forEach((d,di)=>{h+=`<tr>${di===0?`<td rowspan="6"><b>${name}</b></td>`:""}<td>${d}</td>${SLOTS.map((_,p)=>{let c=w[p][di];let lab=false;if(c==="^")c=w[p-1][di];if(c&&c.startsWith("L:")){lab=true;c=c.slice(2);}return c?`<td style="height:22px;background:color-mix(in srgb,var(--${S[c].c}) 16%,#fff)">${c}${lab?"-L":""}/${S[c].f}</td>`:`<td style="height:22px"></td>`}).join("")}</tr>`;}));
+  h+=`</tbody></table><p style="margin-top:8px;color:#5B6782">${Object.entries(S).map(([k,s])=>`${k} = ${s.t} (${F[s.f].n})`).join(" · ")} · -L = practical</p>`;
+  return frame("Master","reports/master",`<div class="head"><h3>Master timetable</h3><span class="chip">All classes · A3</span><button class="btn pri">Download PDF</button></div>`+pdfShell("Master Timetable","<b>All programs</b>Showing 2 of 14 classes in this preview",h));}},
+
+{g:"End users",t:"Faculty and student app",a:null,
+ p:"After publishing, faculty and students open the mobile app and see today first. Faculty get a reminder before each lecture.",
+ pts:["Today view, then the week","Works offline after first load","Next-lecture notification"],
+ r:()=>`<div style="display:flex;gap:40px;justify-content:center;flex-wrap:wrap">
+ <div class="phone"><div class="ps"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)"><span>9:41</span><span>Faculty</span></div>
+ <h3 style="font-family:var(--display);font-size:22px;margin-top:10px">Hi, Dr. Mehta</h3><p style="color:var(--muted);font-size:13px">Monday, 30 Nov · 3 lectures today</p>
+ <div class="daysel">${DAYS.map((d,i)=>`<span class="${i===0?"on":""}">${d}</span>`).join("")}</div>
+ <div class="lec now" style="background:var(--s1)"><b>Data Structures</b><small>09:00–09:55 · BCA-3A · Room 201</small><small>Starts in 10 min</small></div>
+ <div class="lec" style="background:var(--s1);opacity:.85"><b>Data Structures</b><small>11:05–12:00 · BCA-3B · Room 202</small></div>
+ <div style="text-align:center;font-size:12px;color:var(--muted);padding:6px;border:1px dashed var(--line);border-radius:10px;margin-bottom:8px">Lunch 12:55–13:35</div>
+ <div class="lec" style="background:var(--s1)"><b>DS Lab · Batch B1</b><small>13:35–15:25 · BCA-3A · Lab 1</small></div></div></div>
+ <div class="phone"><div class="ps"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)"><span>9:41</span><span>Student</span></div>
+ <h3 style="font-family:var(--display);font-size:22px;margin-top:10px">BCA-3A · Batch B1</h3><p style="color:var(--muted);font-size:13px">Monday, 30 Nov</p>
+ <div class="daysel">${DAYS.map((d,i)=>`<span class="${i===0?"on":""}">${d}</span>`).join("")}</div>
+ ${[["DS","09:00","Room 201"],["DBMS","09:55","Room 201"],["OS","11:05","Room 201"],["JAVA","12:00","Room 201"]].map(([k,t,r])=>`<div class="lec" style="background:var(--${S[k].c})"><b>${S[k].t}</b><small>${t} · ${F[S[k].f].n} · ${r}</small></div>`).join("")}
+ <div class="lec" style="background:var(--s1)"><b>DS Lab</b><small>13:35–15:25 · Lab 1</small></div></div></div></div>`}
+];
+
+/* ---------- interactions ---------- */
+let genTimer=null;
+function runGen(){
+  clearInterval(genTimer);
+  const N=120,fit=[],cl=[];let i=0;
+  const bar=document.getElementById("gBar"),gG=document.getElementById("gGen"),gC=document.getElementById("gClash"),gF=document.getElementById("gFit");
+  const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function step(){
+    i++; const t=i/N;
+    const c=Math.max(0,Math.round(212*Math.pow(1-Math.min(1,t*1.35),2.4)));
+    const f=0.04+0.93*(1-Math.pow(1-t,3));
+    fit.push(f);cl.push(c);
+    gG.textContent=i*25; gC.textContent=c; gC.style.color=c?"var(--bad)":"var(--good)"; gF.textContent=f.toFixed(2); bar.style.width=(t*100)+"%";
+    const path=(arr,fn)=>arr.map((v,k)=>(k?"L":"M")+(k/(N-1)*800).toFixed(1)+" "+fn(v).toFixed(1)).join(" ");
+    document.getElementById("gFitLine").setAttribute("d",path(fit,v=>180-v*160));
+    document.getElementById("gClashLine").setAttribute("d",path(cl,v=>180-v/212*160));
+    if(i>=N){clearInterval(genTimer);document.getElementById("gDone").style.display="flex";}
+  }
+  if(reduce){for(let k=0;k<N;k++)step();return;}
+  genTimer=setInterval(step,30);
+}
+function wireEditor(){
+  const cells=[...document.querySelectorAll(".tt .c[data-p]")];
+  const msg=document.getElementById("dragMsg");
+  let src=null;
+  cells.forEach(c=>{
+    c.addEventListener("dragstart",e=>{src=c;e.dataTransfer.setData("text/plain","x");
+      const k=c.querySelector("b")?.textContent;const fac=k&&S[k]?S[k].f:null;
+      cells.forEach(o=>{if(o===src||o.style.gridRow)return;
+        const ok=!(Number(o.dataset.d)===5&&Number(o.dataset.p)>3) && !(fac==="PD"&&Number(o.dataset.d)===2&&Number(o.dataset.p)>3);
+        o.classList.add(ok?"ok":"no");o.dataset.reason=ok?"":(Number(o.dataset.d)===5?"Saturday is a half day":"Dr. Desai is not available");});
+    });
+    c.addEventListener("dragend",()=>cells.forEach(o=>o.classList.remove("ok","no")));
+    c.addEventListener("dragover",e=>{if(c.classList.contains("ok"))e.preventDefault();});
+    c.addEventListener("dragenter",()=>{if(c.classList.contains("no"))msg.innerHTML='<span style="color:var(--bad)"><b>Clash:</b> '+c.dataset.reason+'</span>';else if(c.classList.contains("ok"))msg.innerHTML='<span style="color:var(--good)">Allowed here</span>';});
+    c.addEventListener("drop",e=>{e.preventDefault();if(!src||src===c)return;
+      const a=src.innerHTML,ab=src.style.background,ac=src.className;src.innerHTML=c.innerHTML;src.style.background=c.style.background;src.className=c.className;
+      c.innerHTML=a;c.style.background=ab;c.className=ac;
+      [src,c].forEach(x=>{x.classList.remove("ok","no");x.draggable=!x.classList.contains("e");});
+      msg.innerHTML='<span style="color:var(--good)"><b>Moved.</b> No hard clashes.</span>';});
+  });
+}
+
+/* ---------- navigation ---------- */
+let cur=0; const seen=new Set();
+const list=document.getElementById("storyList"), pick=document.getElementById("mobilePick");
+let lastG="",html="";
+SCREENS.forEach((s,i)=>{
+  if(s.g!==lastG){if(lastG)html+="</ol>";html+=`<h4>${s.g}</h4><ol>`;lastG=s.g;}
+  html+=`<li><button data-i="${i}"><b>${i+1}</b>${s.t}</button></li>`;
+  pick.insertAdjacentHTML("beforeend",`<option value="${i}">${i+1}. ${s.t}</option>`);
+});
+list.innerHTML=html+"</ol>";
+list.addEventListener("click",e=>{const b=e.target.closest("button");if(b)go(+b.dataset.i);});
+pick.addEventListener("change",()=>go(+pick.value));
+function go(i){
+  cur=Math.max(0,Math.min(SCREENS.length-1,i)); seen.add(cur);
+  const s=SCREENS[cur];
+  clearInterval(genTimer);
+  document.getElementById("stepNo").textContent=`Screen ${cur+1} of ${SCREENS.length} · ${s.g}`;
+  document.getElementById("stepTitle").textContent=s.t;
+  document.getElementById("stepPurpose").textContent=s.p;
+  document.getElementById("stepPoints").innerHTML=s.pts.map(x=>`<li>${x}</li>`).join("");
+  document.getElementById("canvas").innerHTML=s.r();
+  document.getElementById("canvas").scrollTop=0;
+  if(s.after) s.after();
+  list.querySelectorAll("button").forEach(b=>{const k=+b.dataset.i;b.classList.toggle("on",k===cur);b.classList.toggle("seen",seen.has(k)&&k!==cur);});
+  pick.value=cur;
+  document.getElementById("prevBtn").disabled=cur===0;
+  document.getElementById("nextBtn").textContent=cur===SCREENS.length-1?"Back to start":"Next screen";
+  if(location.hash!=="#screen-"+(cur+1)) history.replaceState(null,"","#screen-"+(cur+1));
+}
+document.getElementById("prevBtn").onclick=()=>go(cur-1);
+document.getElementById("nextBtn").onclick=()=>go(cur===SCREENS.length-1?0:cur+1);
+document.addEventListener("keydown",e=>{if(e.target.closest("input,select"))return;if(e.key==="ArrowRight")go(cur+1);if(e.key==="ArrowLeft")go(cur-1);});
+const m=location.hash.match(/^#screen-(\d+)$/); go(m?+m[1]-1:0);
+</script>
+</body>
+</html>
